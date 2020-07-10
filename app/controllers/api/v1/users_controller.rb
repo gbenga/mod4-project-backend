@@ -35,10 +35,10 @@ class Api::V1::UsersController < ApplicationController
         #If we can find them, authenticate the user with the password we've been given
         if user && user.authenticate(params[:password])
          #If it was successful, log them in
-         render json: {username: user.username, token: generate_token({id: user.id})}
+         render json: {user: user, token: generate_token({id: user.id})}
          #Otherwise send back an authentication error
         else 
-            render json: {message: "Cant find a user with that username OR incorrect password"}
+            render json: {error: "Invalid Credentials"}, status: 400
         end
     end
 
@@ -49,7 +49,8 @@ class Api::V1::UsersController < ApplicationController
      user = User.find_by(id: id)
      #Respond with the username of that user & generate a new token from their id
      if user 
-        render json: {username: user.username, token: generate_token({id: user.id})}
+        user.password_digest = nil
+        render json: user
         #Otherwise send back an authentication error
      else 
         render json: {message: "Cant find a user with that id OR decode the JWT token"}
@@ -58,6 +59,6 @@ class Api::V1::UsersController < ApplicationController
 
     private
     def user_params
-        params.require(:user).permit(:name, :username, :password_digest, :bio, :follower, :avatar)
+        params.require(:user).permit(:name, :username, :password, :bio, :followers, :avatar)
     end
 end
